@@ -1,9 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [loading, setLoading] = useState(null);
   const [tab, setTab] = useState('donate');
   const [nick, setNick] = useState('');
+  const [particles, setParticles] = useState([]);
+
+  // Генерация частиц для живого фона
+  useEffect(() => {
+    const newParticles = [];
+    for (let i = 0; i < 30; i++) {
+      newParticles.push({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 15,
+        duration: 10 + Math.random() * 10,
+        size: 2 + Math.random() * 4,
+      });
+    }
+    setParticles(newParticles);
+  }, []);
 
   const buy = async (type, id) => {
     if (!nick) {
@@ -54,9 +70,10 @@ export default function Home() {
   ];
 
   const privatItems = [
-    { id: 'medium', name: 'Приват 15x15', price: 499, icon: '🛡️', color: '#A8A8A8', desc: 'Блок привата 15x15' },
-    { id: 'large', name: 'Приват 30x30', price: 999, icon: '🛡️', color: '#5BC8F5', desc: 'Блок привата 30x30' },
-    { id: 'huge', name: 'Приват 50x50', price: 1999, icon: '🛡️', color: '#F3D958', desc: 'Блок привата 50x50' }
+    { id: 'p7', name: 'Приват 7x7', price: 199, icon: '🛡️', color: '#A8A8A8', desc: 'Блок привата 7x7' },
+    { id: 'p15', name: 'Приват 15x15', price: 499, icon: '🛡️', color: '#5BC8F5', desc: 'Блок привата 15x15' },
+    { id: 'p25', name: 'Приват 25x25', price: 999, icon: '🛡️', color: '#F3D958', desc: 'Блок привата 25x25' },
+    { id: 'p49', name: 'Приват 49x49', price: 1999, icon: '🛡️', color: '#FF6D0A', desc: 'Блок привата 49x49' }
   ];
 
   const itemItems = [
@@ -72,91 +89,79 @@ export default function Home() {
     tab === 'privat' ? privatItems : itemItems;
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="logo">ʙʟᴇᴡxᴀʏꜱ</div>
-        <p className="subtitle">Магазин • Анархия 1.16.5-1.21</p>
-      </header>
-
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        gap: '12px', 
-        marginBottom: '30px',
-        flexWrap: 'wrap'
-      }}>
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+    <>
+      {/* Живой фон */}
+      <div className="living-bg" />
+      
+      {/* Плавающие частицы */}
+      <div className="particles">
+        {particles.map(p => (
+          <div
+            key={p.id}
+            className="particle"
             style={{
-              background: tab === t.id ? 'linear-gradient(135deg, #E6C94D, #F3D958)' : '#1a1a1a',
-              color: tab === t.id ? '#0a0a0a' : '#aaa',
-              border: '2px solid ' + (tab === t.id ? '#E6C94D' : '#2a2a2a'),
-              padding: '12px 24px',
-              borderRadius: '10px',
-              fontSize: '15px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
+              left: `${p.left}%`,
+              animationDelay: `${p.delay}s`,
+              animationDuration: `${p.duration}s`,
+              width: `${p.size}px`,
+              height: `${p.size}px`,
             }}
-          >
-            {t.icon} {t.name}
-          </button>
+          />
         ))}
       </div>
 
-      <div style={{
-        maxWidth: '500px',
-        margin: '0 auto 30px',
-        background: '#1a1a1a',
-        borderRadius: '12px',
-        padding: '20px',
-        border: '2px solid #2a2a2a'
-      }}>
-        <label style={{ display: 'block', marginBottom: '10px', color: '#aaa', fontSize: '14px' }}>
-          Ваш ник в игре:
-        </label>
-        <input
-          type="text"
-          value={nick}
-          onChange={(e) => setNick(e.target.value)}
-          placeholder="Например: BlewXays"
-          style={{
-            width: '100%',
-            padding: '14px',
-            background: '#0a0a0a',
-            border: '2px solid #2a2a2a',
-            borderRadius: '8px',
-            color: '#fff',
-            fontSize: '16px',
-            outline: 'none'
-          }}
-        />
-      </div>
+      <div className="container">
+        <header className="header">
+          <div className="logo">ʙʟᴇᴡxᴀʏꜱ</div>
+          <p className="subtitle">Магазин • Анархия 1.16.5-1.21</p>
+        </header>
 
-      <div className="grid">
-        {currentItems.map(item => (
-          <div key={item.id} className="card">
-            <div className="card-icon">{item.icon}</div>
-            <h2 className="card-title" style={{ color: item.color }}>{item.name}</h2>
-            <p style={{ color: '#888', fontSize: '14px', marginBottom: '8px' }}>{item.desc}</p>
-            <div className="card-price">{item.price} <span>₽</span></div>
+        <div className="tabs">
+          {tabs.map(t => (
             <button
-              className="buy-btn"
-              onClick={() => buy(tab, item.id)}
-              disabled={loading === item.id}
+              key={t.id}
+              className={`tab-btn ${tab === t.id ? 'active' : ''}`}
+              onClick={() => setTab(t.id)}
             >
-              {loading === item.id ? 'Загрузка...' : 'Купить'}
+              {t.icon} {t.name}
             </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <footer className="footer">
-        <p>© 2026 BlewXays • <a href="https://blewxays.ru">blewxays.ru</a></p>
-        <p style={{ marginTop: '10px' }}>Оплата криптой (USDT, TON) через @CryptoBot</p>
-      </footer>
-    </div>
+        <div className="nick-form">
+          <label className="nick-label">Ваш ник в игре:</label>
+          <input
+            type="text"
+            className="nick-input"
+            value={nick}
+            onChange={(e) => setNick(e.target.value)}
+            placeholder="Например: BlewXays"
+          />
+        </div>
+
+        <div className="grid">
+          {currentItems.map(item => (
+            <div key={item.id} className="card">
+              <div className="card-icon">{item.icon}</div>
+              <h2 className="card-title" style={{ color: item.color }}>{item.name}</h2>
+              <p className="card-desc">{item.desc}</p>
+              <div className="card-price">{item.price} <span>₽</span></div>
+              <button
+                className="buy-btn"
+                onClick={() => buy(tab, item.id)}
+                disabled={loading === item.id}
+              >
+                {loading === item.id ? 'Загрузка...' : 'Купить'}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <footer className="footer">
+          <p>© 2026 BlewXays • <a href="https://blewxays.ru">blewxays.ru</a></p>
+          <p style={{ marginTop: '10px' }}>Оплата криптой (USDT, TON) через @CryptoBot</p>
+        </footer>
+      </div>
+    </>
   );
 }
