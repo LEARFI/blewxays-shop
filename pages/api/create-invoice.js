@@ -5,7 +5,7 @@ const client = new CryptoBotAPI(process.env.CRYPTO_PAY_TOKEN);
 const PRICES = {
   donate: { sand: 199, stone: 299, iron: 599, gold: 999, diamond: 1999, netherite: 3999, blewxays: 7999 },
   keys: { default: 99, mystic: 299, legendary: 999, dungeon: 399 },
-  privat: { medium: 499, large: 999, huge: 1999 },
+  privat: { p7: 199, p15: 499, p25: 999, p49: 1999 },
   items: { spawners_2: 499, spawners_4: 799, krons_1000: 199, coins_100000: 299 }
 };
 
