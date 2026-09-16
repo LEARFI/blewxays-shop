@@ -2,25 +2,33 @@ import CryptoBotAPI from 'crypto-bot-api';
 
 const client = new CryptoBotAPI(process.env.CRYPTO_PAY_TOKEN);
 
-const prices = {
-  sand: 199, stone: 299, iron: 599, gold: 999,
-  diamond: 1999, netherite: 3999, blewxays: 7999
+const PRICES = {
+  donate: { sand: 199, stone: 299, iron: 599, gold: 999, diamond: 1999, netherite: 3999, blewxays: 7999 },
+  keys: { default: 99, mystic: 299, legendary: 999, dungeon: 399 },
+  privat: { medium: 499, large: 999, huge: 1999 },
+  items: { spawners_2: 499, spawners_4: 799, krons_1000: 199, coins_100000: 299 }
 };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { group } = req.body;
-  if (!prices[group]) return res.status(400).json({ error: 'Неверная группа' });
+  const { type, id, nick } = req.body;
 
-  const amountUsdt = (prices[group] / 100).toFixed(2);
+  if (!PRICES[type] || !PRICES[type][id]) {
+    return res.status(400).json({ error: 'Неверный товар' });
+  }
+  if (!nick) {
+    return res.status(400).json({ error: 'Введите ник' });
+  }
+
+  const amountUsdt = (PRICES[type][id] / 100).toFixed(2);
 
   try {
     const invoice = await client.createInvoice({
       asset: 'USDT',
       amount: amountUsdt,
-      description: `Привилегия ${group.toUpperCase()} на 30 дней`,
-      payload: `group_${group}`
+      description: `${type.toUpperCase()}: ${id.toUpperCase()} для ${nick}`,
+      payload: `${type}_${id}_${nick}`
     });
     res.json({ payUrl: invoice.bot_invoice_url });
   } catch (e) {
