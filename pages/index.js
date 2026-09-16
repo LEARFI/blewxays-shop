@@ -9,13 +9,13 @@ export default function Home() {
   // Генерация частиц для живого фона
   useEffect(() => {
     const newParticles = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 40; i++) {
       newParticles.push({
         id: i,
         left: Math.random() * 100,
         delay: Math.random() * 15,
-        duration: 10 + Math.random() * 10,
-        size: 2 + Math.random() * 4,
+        duration: 8 + Math.random() * 12,
+        size: 3 + Math.random() * 5,
       });
     }
     setParticles(newParticles);
@@ -90,10 +90,8 @@ export default function Home() {
 
   return (
     <>
-      {/* Живой фон */}
       <div className="living-bg" />
       
-      {/* Плавающие частицы */}
       <div className="particles">
         {particles.map(p => (
           <div
