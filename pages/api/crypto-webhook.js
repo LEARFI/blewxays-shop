@@ -4,7 +4,7 @@ const COMMANDS = {
   donate: (nick, id) => `lp user ${nick} parent addtemp ${id} 30d`,
   keys: (nick, id) => `cc give p ${id} 1 ${nick}`,
   privat: (nick, id) => {
-    const blocks = { medium: 'COAL_ORE', large: 'DIAMOND_ORE', huge: 'ANCIENT_DEBRIS' };
+    const blocks = { p7: 'IRON_BLOCK', p15: 'COAL_ORE', p25: 'DIAMOND_ORE', p49: 'ANCIENT_DEBRIS' };
     return `give ${nick} ${blocks[id]} 1`;
   },
   items: (nick, id) => {
