@@ -1,25 +1,34 @@
 import { useState, useEffect } from 'react';
 
 export default function Home() {
+  // Активная вкладка: donate / keys / houses
   const [tab, setTab] = useState('donate');
+  // Ник игрока
   const [nick, setNick] = useState('');
+  // Выбранная валюта
   const [currency, setCurrency] = useState('RUB');
+  // Количество для каждого товара { id: число }
   const [quantities, setQuantities] = useState({});
+  // Товары в «корзине» (уехали вбок)
+  const [cart, setCart] = useState([]);
+  // Частицы для фона
   const [particles, setParticles] = useState([]);
 
-  // Курсы валют (примерные, уточняйте у продавца)
+  // Курсы валют (примерные — уточняйте у продавца)
   const rates = {
-    RUB: { symbol: '₽', rate: 1 },
-    BYN: { symbol: 'Br', rate: 0.032 },
-    UAH: { symbol: '₴', rate: 0.42 },
+    RUB: { symbol: '₽', rate: 1, label: 'Рубли' },
+    BYN: { symbol: 'Br', rate: 0.032, label: 'Бел. рубли' },
+    UAH: { symbol: '₴', rate: 0.42, label: 'Гривны' },
   };
 
+  // Форматирование цены под выбранную валюту
   const formatPrice = (rub) => {
     const c = rates[currency];
     const value = rub * c.rate;
     return `${value.toFixed(currency === 'RUB' ? 0 : 2)} ${c.symbol}`;
   };
 
+  // Генерация частиц фона
   useEffect(() => {
     const newParticles = [];
     for (let i = 0; i < 40; i++) {
@@ -34,32 +43,70 @@ export default function Home() {
     setParticles(newParticles);
   }, []);
 
-  const buy = (item, qty = 1) => {
+  // Добавить товар в корзину (уезжает вбок)
+  const addToCart = (item, qty = 1) => {
+    setCart((prev) => {
+      const existing = prev.find((x) => x.id === item.id);
+      if (existing) {
+        return prev.map((x) =>
+          x.id === item.id ? { ...x, qty: x.qty + qty } : x
+        );
+      }
+      return [...prev, { ...item, qty }];
+    });
+  };
+
+  // Убрать товар из корзины
+  const removeFromCart = (id) => {
+    setCart((prev) => prev.filter((x) => x.id !== id));
+  };
+
+  // Изменить количество в корзине
+  const changeCartQty = (id, delta) => {
+    setCart((prev) =>
+      prev
+        .map((x) => (x.id === id ? { ...x, qty: Math.max(1, x.qty + delta) } : x))
+        .filter((x) => x.qty > 0)
+    );
+  };
+
+  // Итоговая сумма корзины (в рублях)
+  const cartTotalRub = cart.reduce((sum, x) => sum + x.price * x.qty, 0);
+
+  // Отправка заказа в Telegram
+  const checkout = () => {
     if (!nick) {
       alert('Введите ваш ник в игре!');
       return;
     }
-    const totalRub = item.price * qty;
+    if (cart.length === 0) {
+      alert('Корзина пуста!');
+      return;
+    }
     const c = rates[currency];
-    const total = (totalRub * c.rate).toFixed(currency === 'RUB' ? 0 : 2);
+    const total = (cartTotalRub * c.rate).toFixed(currency === 'RUB' ? 0 : 2);
+    const lines = cart
+      .map((x) => `• ${x.name} × ${x.qty} — ${formatPrice(x.price * x.qty)}`)
+      .join('\n');
     const text =
-      `★ Покупка на BLEWXAYS ★\n` +
-      `Товар: ${item.name}\n` +
-      `Количество: ${qty}\n` +
-      `Сумма: ${total} ${c.symbol}\n` +
+      `★ Заказ на BLEWXAYS ★\n` +
+      `${lines}\n` +
+      `━━━━━━━━━━━━━━\n` +
+      `Итого: ${total} ${c.symbol}\n` +
       `Валюта: ${currency}\n` +
       `Ник в игре: ${nick}`;
     const url = `https://t.me/polloplp?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
 
+  // Вкладки
   const tabs = [
     { id: 'donate', name: 'Привилегии', icon: '★' },
     { id: 'keys', name: 'Ключи', icon: '⛏' },
     { id: 'houses', name: 'Хаусы', icon: '☄' },
-    { id: 'privat', name: 'Приваты', icon: '🛡' },
   ];
 
+  // Привилегии (взято с фото)
   const donateItems = [
     {
       id: 'ember', name: 'EMBER', price: 49, icon: '★',
@@ -111,6 +158,7 @@ export default function Home() {
     },
   ];
 
+  // Ключи (только донат-кейс)
   const keyItems = [
     {
       id: 'donate_key', name: 'Ключ от донат-кейса', price: 69, icon: '⛏',
@@ -118,43 +166,54 @@ export default function Home() {
     },
   ];
 
+  // Хаусы (1 Хаус = 1 ₽)
   const houseItem = {
     id: 'house', name: 'Хаус', price: 1, icon: '☄',
     desc: '1 Хаус = 1 ₽. Внутриигровая валюта BLEWXAYS. Анархия — но деньги сильно не решают.',
   };
 
-  const privatItems = [
-    { id: 'p7', name: 'Приват 7x7', price: 199, icon: '🛡', desc: 'Блок привата 7x7. Анархия — но деньги сильно не решают.' },
-    { id: 'p15', name: 'Приват 15x15', price: 499, icon: '🛡', desc: 'Блок привата 15x15. Анархия — но деньги сильно не решают.' },
-    { id: 'p25', name: 'Приват 25x25', price: 999, icon: '🛡', desc: 'Блок привата 25x25. Анархия — но деньги сильно не решают.' },
-    { id: 'p49', name: 'Приват 49x49', price: 1999, icon: '🛡', desc: 'Блок привата 49x49. Анархия — но деньги сильно не решают.' },
-  ];
-
+  // Красивый ползунок количества
   const renderQtyControl = (id, max = 64) => {
     const qty = quantities[id] || 1;
+    const percent = ((qty - 1) / (max - 1)) * 100;
     return (
       <div className="qty-control">
-        <button className="qty-btn" onClick={() => setQuantities({ ...quantities, [id]: Math.max(1, qty - 1) })}>−</button>
-        <input
-          type="range"
-          min="1"
-          max={max}
-          value={qty}
-          onChange={(e) => setQuantities({ ...quantities, [id]: parseInt(e.target.value) })}
-          className="qty-slider"
-        />
+        <button
+          className="qty-btn"
+          onClick={() => setQuantities({ ...quantities, [id]: Math.max(1, qty - 1) })}
+        >
+          −
+        </button>
+        <div className="qty-slider-wrap">
+          <div className="qty-slider-fill" style={{ width: `${percent}%` }} />
+          <input
+            type="range"
+            min="1"
+            max={max}
+            value={qty}
+            onChange={(e) => setQuantities({ ...quantities, [id]: parseInt(e.target.value) })}
+            className="qty-slider"
+          />
+        </div>
         <span className="qty-value">{qty}</span>
-        <button className="qty-btn" onClick={() => setQuantities({ ...quantities, [id]: Math.min(max, qty + 1) })}>+</button>
+        <button
+          className="qty-btn"
+          onClick={() => setQuantities({ ...quantities, [id]: Math.min(max, qty + 1) })}
+        >
+          +
+        </button>
       </div>
     );
   };
 
   return (
     <>
+      {/* Живой фон */}
       <div className="living-bg" />
 
+      {/* Частицы */}
       <div className="particles">
-        {particles.map(p => (
+        {particles.map((p) => (
           <div
             key={p.id}
             className="particle"
@@ -169,7 +228,7 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="container">
+      <div className={`container ${cart.length > 0 ? 'with-cart' : ''}`}>
         <header className="header">
           <div className="logo">BLEWXAYS</div>
           <p className="subtitle">Магазин • Анархия 1.21.11</p>
@@ -180,8 +239,9 @@ export default function Home() {
           </div>
         </header>
 
+        {/* Вкладки */}
         <div className="tabs">
-          {tabs.map(t => (
+          {tabs.map((t) => (
             <button
               key={t.id}
               className={`tab-btn ${tab === t.id ? 'active' : ''}`}
@@ -192,57 +252,77 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Форма: ник + валюта */}
         <div className="nick-form">
-          <label className="nick-label">Ваш ник в игре:</label>
-          <input
-            type="text"
-            className="nick-input"
-            value={nick}
-            onChange={(e) => setNick(e.target.value)}
-            placeholder="Например: BlewXays"
-          />
-          <label className="nick-label" style={{ marginTop: '12px' }}>Валюта:</label>
-          <select
-            className="nick-input"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-          >
-            <option value="RUB">₽ Рубли (RUB)</option>
-            <option value="BYN">Br Белорусские рубли (BYN)</option>
-            <option value="UAH">₴ Гривны (UAH)</option>
-          </select>
+          <div className="form-row">
+            <div className="form-field">
+              <label className="nick-label">Ваш ник в игре:</label>
+              <input
+                type="text"
+                className="nick-input"
+                value={nick}
+                onChange={(e) => setNick(e.target.value)}
+                placeholder="Например: BlewXays"
+              />
+            </div>
+            <div className="form-field">
+              <label className="nick-label">Валюта:</label>
+              <select
+                className="nick-input"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                {Object.entries(rates).map(([code, c]) => (
+                  <option key={code} value={code}>
+                    {c.symbol} {c.label} ({code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <p className="rate-note">Курс валют примерный — уточняйте у продавца в Telegram.</p>
         </div>
 
+        {/* Контент вкладок */}
         {tab === 'houses' ? (
           <div className="grid">
-            <div className="card">
+            <div className="card card-house">
               <div className="card-icon">{houseItem.icon}</div>
               <h2 className="card-title">{houseItem.name}</h2>
               <p className="card-desc">{houseItem.desc}</p>
-              <div className="card-price">{formatPrice(houseItem.price)} <span>за 1 шт</span></div>
+              <div className="card-price">
+                {formatPrice(houseItem.price)} <span>за 1 шт</span>
+              </div>
               {renderQtyControl('house', 1000)}
               <div className="card-total">
                 Итого: {formatPrice(houseItem.price * (quantities['house'] || 1))}
               </div>
-              <button className="buy-btn" onClick={() => buy(houseItem, quantities['house'] || 1)}>
-                Купить
+              <button
+                className="buy-btn"
+                onClick={() => addToCart(houseItem, quantities['house'] || 1)}
+              >
+                В корзину
               </button>
             </div>
           </div>
         ) : (
           <div className="grid">
-            {(tab === 'donate' ? donateItems : tab === 'keys' ? keyItems : privatItems).map(item => {
+            {(tab === 'donate' ? donateItems : keyItems).map((item) => {
               const qty = quantities[item.id] || 1;
               const showQty = tab === 'keys';
               return (
-                <div key={item.id} className="card">
+                <div
+                  key={item.id}
+                  className={`card ${item.id === 'blewxays' ? 'card-legendary' : ''}`}
+                >
                   <div className="card-icon">{item.icon}</div>
                   <h2 className="card-title">{item.name}</h2>
                   <p className="card-desc">{item.desc}</p>
                   {item.features && (
                     <ul className="card-features">
-                      {item.features.map(f => <li key={f}>{f}</li>)}
+                      {item.features.map((f) => (
+                        <li key={f}>{f}</li>
+                      ))}
                     </ul>
                   )}
                   {item.salary !== undefined && (
@@ -261,8 +341,11 @@ export default function Home() {
                       Итого: {formatPrice(item.price * qty)}
                     </div>
                   )}
-                  <button className="buy-btn" onClick={() => buy(item, showQty ? qty : 1)}>
-                    Купить
+                  <button
+                    className="buy-btn"
+                    onClick={() => addToCart(item, showQty ? qty : 1)}
+                  >
+                    В корзину
                   </button>
                 </div>
               );
@@ -271,11 +354,60 @@ export default function Home() {
         )}
 
         <footer className="footer">
-          <p>© 2026 BLEWXAYS • <a href="https://blewxays-shop.vercel.app">blewxays-shop.vercel.app</a></p>
-          <p style={{ marginTop: '10px' }}>Discord: <a href="https://discord.gg/wK8t4Xmec">discord.gg/wK8t4Xmec</a> • Telegram: <a href="https://t.me/blewxays/">t.me/blewxays</a></p>
+          <p>
+            © 2026 BLEWXAYS •{' '}
+            <a href="https://blewxays-shop.vercel.app">blewxays-shop.vercel.app</a>
+          </p>
+          <p style={{ marginTop: '10px' }}>
+            Discord: <a href="https://discord.gg/wK8t4Xmec">discord.gg/wK8t4Xmec</a> • Telegram:{' '}
+            <a href="https://t.me/blewxays/">t.me/blewxays</a>
+          </p>
           <p style={{ marginTop: '10px' }}>Оплата и выдача — через Telegram @polloplp</p>
         </footer>
       </div>
+
+      {/* Корзина справа — выезжает, когда есть товары */}
+      <aside className={`cart-panel ${cart.length > 0 ? 'open' : ''}`}>
+        <div className="cart-header">
+          <span>★ Корзина</span>
+          <button className="cart-close" onClick={() => setCart([])}>✕</button>
+        </div>
+
+        {cart.length === 0 ? (
+          <p className="cart-empty">Корзина пуста</p>
+        ) : (
+          <>
+            <div className="cart-items">
+              {cart.map((x) => (
+                <div key={x.id} className="cart-item">
+                  <div className="cart-item-icon">{x.icon}</div>
+                  <div className="cart-item-info">
+                    <div className="cart-item-name">{x.name}</div>
+                    <div className="cart-item-price">{formatPrice(x.price * x.qty)}</div>
+                  </div>
+                  <div className="cart-item-qty">
+                    <button onClick={() => changeCartQty(x.id, -1)}>−</button>
+                    <span>{x.qty}</span>
+                    <button onClick={() => changeCartQty(x.id, +1)}>+</button>
+                  </div>
+                  <button className="cart-item-remove" onClick={() => removeFromCart(x.id)}>
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="cart-footer">
+              <div className="cart-total">
+                Итого: <b>{formatPrice(cartTotalRub)}</b>
+              </div>
+              <button className="buy-btn cart-checkout" onClick={checkout}>
+                Оформить заказ
+              </button>
+            </div>
+          </>
+        )}
+      </aside>
     </>
   );
 }
